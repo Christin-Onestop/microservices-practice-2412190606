@@ -55,6 +55,7 @@
     - 用户管理、任务审核、分类管理、纠纷处理、数据统计、公告管理、信用体系管理、运营报表
 
 核心业务流程：
+```mermaid
 sequenceDiagram
     participant S as 学生(发单方)
     participant G as API网关

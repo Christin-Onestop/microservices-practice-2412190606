@@ -241,3 +241,17 @@ sequenceDiagram
 - **监控：** Prometheus + Grafana + Micrometer Tracing + Zipkin，实现指标监控与链路追踪。
 - **部署：** Docker Compose 本地编排，后续可扩展 Kubernetes、CI/CD、蓝绿部署。
 - **安全：** API 网关鉴权、服务间加密通信、零信任架构、操作审计。
+
+## 运行方式
+
+### 启动单体应用
+
+cd monolith
+./mvnw spring-boot:run
+
+### 验证接口
+
+- GET http://localhost:8080/api/hello
+- GET http://localhost:8080/actuator/health
+
+默认端口为 8080。如需修改端口，可在 `monolith/src/main/resources/application.yml` 中调整 `server.port`。

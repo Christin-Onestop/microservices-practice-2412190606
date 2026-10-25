@@ -261,3 +261,87 @@ cd monolith
 - GET http://localhost:8080/actuator/health
 
 默认端口为 8080。如需修改端口，可在 `monolith/src/main/resources/application.yml` 中调整 `server.port`。
+
+## Docker Compose 部署
+
+### 环境要求
+
+- Docker Desktop，且 Docker Engine 正常运行。
+- Docker Compose v2 或兼容版本。
+- 项目使用 Java 25 和 Maven 构建；Docker 多阶段构建会在容器内完成应用打包。
+
+### 配置环境变量
+
+首次运行时，在项目根目录执行：
+
+```bash
+cp .env.example .env
+```
+
+根据本地环境修改 `.env` 中的数据库用户名、密码、数据库名称和应用端口。请勿将包含真实密码的 `.env` 提交到 Git 仓库。
+
+### 构建并启动
+
+在项目根目录执行：
+
+```bash
+docker compose up -d --build
+```
+
+查看服务状态：
+
+```bash
+docker compose ps
+```
+
+查看应用日志：
+
+```bash
+docker compose logs -f app
+```
+
+按 `Ctrl + C` 可退出日志查看，不会停止容器。
+
+### 接口验证
+
+健康检查：
+
+```bash
+curl -i http://localhost:8080/actuator/health
+```
+
+查询任务列表：
+
+```bash
+curl -i http://localhost:8080/api/tasks
+```
+
+查询指定任务：
+
+```bash
+curl -i http://localhost:8080/api/tasks/1
+```
+
+以上任务查询示例中的 ID 需要对应数据库中实际存在的任务记录。
+
+### 停止服务
+
+停止并移除容器和 Compose 网络：
+
+```bash
+docker compose down
+```
+
+MySQL 数据保存在命名卷 `mysql_data` 中。普通的 `docker compose down` 不会删除该数据卷；不要使用 `docker compose down -v`，除非确实要删除持久化数据。
+
+### 配置文件说明
+
+- `compose.yaml`：定义 Spring Boot 应用和 MySQL 服务、端口映射、环境变量、健康检查及数据卷。
+- `monolith/Dockerfile`：使用多阶段构建生成并运行 Spring Boot JAR。
+- `monolith/.dockerignore`：排除构建产物、IDE 配置和环境变量文件等不需要的内容。
+- `.env.example`：环境变量模板。
+- `.env`：本地环境配置，不应提交到版本控制。
+
+### 验证结果
+
+本次部署验证中，应用和 MySQL 容器均正常运行，MySQL 健康检查通过。健康检查接口返回 HTTP 200，任务列表和单条任务查询接口均返回 HTTP 200。执行 `docker compose down` 并重新启动后，之前创建的任务仍然可以查询，验证了 MySQL 命名卷的数据持久化能力。

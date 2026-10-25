@@ -110,6 +110,12 @@ CampusRunner is running!
 curl -i http://localhost:8080/api/hello
 ```
 
+### 跑腿任务列表
+
+curl -i http://localhost:8080/api/tasks
+
+任务列表以 JSON 数组形式返回；如果尚无任务，预期返回空数组 []。
+
 ### 健康检查接口
 
 - **请求方法：** `GET`

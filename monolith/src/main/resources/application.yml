@@ -5,6 +5,18 @@ spring:
   application:
     name: monolith
 
+  datasource:
+    url: jdbc:mysql://localhost:3306/campusrunner?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+    username: ${DB_USERNAME:campusrunner_app}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+
 management:
   endpoints:
     web:

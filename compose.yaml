@@ -36,8 +36,146 @@ services:
     networks:
       - campusrunner-network
 
+  user-db:
+    image: mysql:8.4.11
+    container_name: campusrunner-user-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${USER_DB_NAME}
+      MYSQL_USER: ${USER_DB_USER}
+      MYSQL_PASSWORD: ${USER_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${USER_DB_ROOT_PASSWORD}
+    volumes:
+      - user_db_data:/var/lib/mysql
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  task-db:
+    image: mysql:8.4.11
+    container_name: campusrunner-task-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${TASK_DB_NAME}
+      MYSQL_USER: ${TASK_DB_USER}
+      MYSQL_PASSWORD: ${TASK_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${TASK_DB_ROOT_PASSWORD}
+    volumes:
+      - task_db_data:/var/lib/mysql
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  payment-db:
+    image: mysql:8.4.11
+    container_name: campusrunner-payment-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${PAYMENT_DB_NAME}
+      MYSQL_USER: ${PAYMENT_DB_USER}
+      MYSQL_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${PAYMENT_DB_ROOT_PASSWORD}
+    volumes:
+      - payment_db_data:/var/lib/mysql
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: campusrunner-user-service
+    restart: unless-stopped
+    depends_on:
+      user-db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://user-db:3306/${USER_DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+      DB_USERNAME: ${USER_DB_USER}
+      DB_PASSWORD: ${USER_DB_PASSWORD}
+    ports:
+      - "8081:8081"
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  task-service:
+    build:
+      context: ./services/task-service
+    container_name: campusrunner-task-service
+    restart: unless-stopped
+    depends_on:
+      task-db:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://task-db:3306/${TASK_DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+      DB_USERNAME: ${TASK_DB_USER}
+      DB_PASSWORD: ${TASK_DB_PASSWORD}
+      USER_SERVICE_URL: http://user-service:8081
+    ports:
+      - "8082:8082"
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+    container_name: campusrunner-payment-service
+    restart: unless-stopped
+    depends_on:
+      payment-db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://payment-db:3306/${PAYMENT_DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+      DB_USERNAME: ${PAYMENT_DB_USER}
+      DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
+    ports:
+      - "8083:8083"
+    networks:
+      - campusrunner-network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
 volumes:
   mysql_data:
+  user_db_data:
+  task_db_data:
+  payment_db_data:
 
 networks:
   campusrunner-network:

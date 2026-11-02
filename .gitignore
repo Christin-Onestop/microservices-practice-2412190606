@@ -1,3 +1,12 @@
 .env
 .env.*
 !.env.example
+
+# Environment secrets
+.env
+
+# Maven build output
+**/target/
+
+# Temporary backups
+*.backup
